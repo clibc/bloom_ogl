@@ -2,8 +2,8 @@
 
 set cc=cl.exe
 set flags=/nologo /W3 /EHsc /Zi /MP2
-set libs=..\depend\glfw\lib\glfw3dll.lib opengl32.lib shell32.lib 
-set includes=/I ..\depend\glm\ /I ..\depend\glfw\include\ /I ..\src\
+set libs=..\depend\glfw\lib\glfw3dll.lib  ..\depend\glew\lib\glew32.lib opengl32.lib shell32.lib 
+set includes=/I ..\depend\glm\ /I ..\depend\glfw\include\ /I ..\depend\glew\include\ /I ..\src\
 set files=..\src\*.cpp
 
 mkdir build\
