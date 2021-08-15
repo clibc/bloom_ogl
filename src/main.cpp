@@ -33,8 +33,7 @@ int main(int argc, char *argv[])
         return -1;
 
     window = glfwCreateWindow(WIDTH, HEIGHT, "loser engine", NULL, NULL);
-    if (!window)
-    {
+    if (!window) {
         glfwTerminate();
         return -1;
     }
@@ -43,8 +42,7 @@ int main(int argc, char *argv[])
 	glfwSetKeyCallback(window, handle_window_input);
 	
 	GLenum err = glewInit();
-	if (GLEW_OK != err)
-	{
+	if (GLEW_OK != err)	{
 		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
 	}
 	
@@ -58,7 +56,7 @@ int main(int argc, char *argv[])
 	glGenBuffers(1, &cube_vb);
 	glBindBuffer(GL_ARRAY_BUFFER, cube_vb);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3),
-				 &vertices[0], GL_STATIC_DRAW);
+                 &vertices[0], GL_STATIC_DRAW);
 
 	GLuint cube_color_vb;
 	glGenBuffers(1, &cube_color_vb);
@@ -70,7 +68,7 @@ int main(int argc, char *argv[])
 	///
 
     GLuint shaderProgram = LoadShaders("./src/shaders/vertex.shader",
-									   "./src/shaders/frag.shader");
+                                       "./src/shaders/frag.shader");
 
 	// MATRICES STUFF
 	glm::mat4 projection_matrix = glm::perspective(glm::radians(60.0f),
@@ -78,9 +76,9 @@ int main(int argc, char *argv[])
 												   0.1f,
 												   100.0f);
 	
-	glm::mat4 view_matrix = glm::lookAt(glm::vec3(2,4,6),
-								 glm::vec3(0,0,0),
-								 glm::vec3(0,1,0));
+	glm::mat4 view_matrix = glm::lookAt(glm::vec3(-1,4,6),
+                                        glm::vec3(0,0,0),
+                                        glm::vec3(0,1,0));
 	glm::mat4 model_matrix = glm::mat4(1.0f);
 
 	glm::mat4 mvp_matrix = projection_matrix * view_matrix * model_matrix;

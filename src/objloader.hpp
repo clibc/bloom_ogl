@@ -11,9 +11,9 @@
 #include "vec3.hpp"
 
 static bool load_obj_file_basic(const char* filePath,
-								std::vector<glm::vec3>& vertices,
-								std::vector<glm::vec2>& texturecoords,
-								std::vector<glm::vec3>& normals)
+                                std::vector<glm::vec3>& vertices,
+                                std::vector<glm::vec2>& texturecoords,
+                                std::vector<glm::vec3>& normals)
 {
 	FILE *f = fopen(filePath, "r");
 	if(f == NULL){
