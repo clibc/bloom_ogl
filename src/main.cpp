@@ -89,10 +89,13 @@ int main(int argc, char *argv[])
 	glm::mat4 view_matrix = glm::lookAt(glm::vec3(1,4,6),
                                         glm::vec3(0,0,0),
                                         glm::vec3(0,1,0));
-    glm::mat4 model_matrix = glm::mat4(1.0f);
+    glm::mat4 model_matrix = glm::mat4(0.0f);
 
 	glm::mat4 mvp_matrix = projection_matrix * view_matrix * model_matrix;
-	
+
+    glm::vec3 light_position = glm::vec3(30.0f, 8.0f, 0.0f);
+
+    
 	//
 
 	glUseProgram(shaderProgram);
@@ -100,6 +103,8 @@ int main(int argc, char *argv[])
 	GLuint matrixID = glGetUniformLocation(shaderProgram, "mvp");
 	glUniformMatrix4fv(matrixID, 1, GL_FALSE, &mvp_matrix[0][0]);
 
+    GLuint light_loc = glGetUniformLocation(shaderProgram, "light_position");
+    glUniform3fv(light_loc, 1, &light_position[0]);
 
     // create texture
     stbi_set_flip_vertically_on_load(true);
