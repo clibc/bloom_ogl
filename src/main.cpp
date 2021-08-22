@@ -9,6 +9,7 @@
 
 #include "cube.h"
 #include "objloader.hpp"
+#include "openglutils.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -56,29 +57,14 @@ int main(int argc, char *argv[])
 	
 	// create cube buffers
 
-	// vertex buffer
-	GLuint cube_vb;
-	glGenBuffers(1, &cube_vb);
-	glBindBuffer(GL_ARRAY_BUFFER, cube_vb);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3),
-                 &vertices[0], GL_STATIC_DRAW);
-
-	GLuint cube_color_vb;
-	glGenBuffers(1, &cube_color_vb);
-	glBindBuffer(GL_ARRAY_BUFFER, cube_color_vb);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3),
-				 &normals[0], GL_STATIC_DRAW);
-
-	GLuint cube_texture_vb;
-	glGenBuffers(1, &cube_texture_vb);
-	glBindBuffer(GL_ARRAY_BUFFER, cube_texture_vb);
-	glBufferData(GL_ARRAY_BUFFER, texturecoords.size() * sizeof(glm::vec2),
-				 &texturecoords[0], GL_STATIC_DRAW);
+	// buffers
+	GLuint cube_vb = create_gl_array_buffer(&vertices[0], vertices.size() * sizeof(glm::vec3));
+	GLuint cube_color_vb = create_gl_array_buffer(&normals[0], normals.size() * sizeof(glm::vec3));
+    GLuint cube_texture_vb = create_gl_array_buffer(&texturecoords[0], texturecoords.size() * sizeof(glm::vec2));
     
 	///
 
-    GLuint shaderProgram = LoadShaders("./src/shaders/vertex.shader",
-                                       "./src/shaders/frag.shader");
+    GLuint shaderProgram = create_shader("./src/shaders/vertex.shader", "./src/shaders/frag.shader");
 
 	// MATRICES STUFF
 	glm::mat4 projection_matrix = glm::perspective(glm::radians(60.0f),
@@ -89,22 +75,18 @@ int main(int argc, char *argv[])
 	glm::mat4 view_matrix = glm::lookAt(glm::vec3(1,4,6),
                                         glm::vec3(0,0,0),
                                         glm::vec3(0,1,0));
-    glm::mat4 model_matrix = glm::mat4(0.0f);
+    glm::mat4 model_matrix = glm::mat4(1.0f);
 
 	glm::mat4 mvp_matrix = projection_matrix * view_matrix * model_matrix;
 
-    glm::vec3 light_position = glm::vec3(30.0f, 8.0f, 0.0f);
+    glm::vec3 light_position = glm::vec3(0.0f, 8.0f, 0.0f);
 
     
 	//
 
-	glUseProgram(shaderProgram);
-
-	GLuint matrixID = glGetUniformLocation(shaderProgram, "mvp");
-	glUniformMatrix4fv(matrixID, 1, GL_FALSE, &mvp_matrix[0][0]);
-
-    GLuint light_loc = glGetUniformLocation(shaderProgram, "light_position");
-    glUniform3fv(light_loc, 1, &light_position[0]);
+    load_uniform_mat4(shaderProgram, "mvp", &mvp_matrix[0][0]);
+    load_uniform_vec3(shaderProgram, "light_position", &light_position[0]);
+    load_uniform_mat4(shaderProgram, "just_model", &model_matrix[0][0]);
 
     // create texture
     stbi_set_flip_vertically_on_load(true);
@@ -134,9 +116,8 @@ int main(int argc, char *argv[])
     while (!glfwWindowShouldClose(window))
     {
         mvp_matrix = projection_matrix * view_matrix * model_matrix_edit;
-        GLuint matrixID = glGetUniformLocation(shaderProgram, "mvp");
-        glUniformMatrix4fv(matrixID, 1, GL_FALSE, &mvp_matrix[0][0]);
-        
+        load_uniform_mat4(shaderProgram, "just_model", &model_matrix_edit[0][0]);
+        load_uniform_mat4(shaderProgram, "mvp", &mvp_matrix[0][0]);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
