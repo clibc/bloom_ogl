@@ -16,14 +16,14 @@
 
 void handle_window_input(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-static glm::mat4 model_matrix_edit = glm::mat4(1.0f);
+static glm::mat4 model_matrix_edit = glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 1.0f, -2.0f));
 
 int main(int argc, char *argv[])
 {
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> texturecoords;
 	std::vector<glm::vec3> normals;
-	bool load_result = load_obj_file_basic("build/sphere.obj",
+	bool load_result = load_obj_file_basic("build/texturedCube.obj",
 						vertices,
 						texturecoords,
 						normals);

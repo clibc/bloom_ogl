@@ -18,7 +18,7 @@ void main()
     frag_pos = vec3(model * vec4(vertexPosition, 1.0));
     frag_pos = vertexPosition;
     textureCoord = textureCoordIn;
-    normal = vec3(model * vec4(vertex_normal, 1.0));
+    normal = vec3(model * vec4(vertex_normal, 0.0));
 }
 
 // so I transformed vertex position and normals into world space
@@ -26,3 +26,6 @@ void main()
 // I do not transform light position because by convention I assume light is already in
 // world coordinates
 // so they need to be in the same coordinate space system in order to get nice looking light
+// also making vec4(vertex_normal, 0.0) 4th component 0 means ignore transformation
+// and only apply rotation. Since I want our normals to be rotated only I make it 0.
+// otherwise normals get messed up
