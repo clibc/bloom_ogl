@@ -11,9 +11,6 @@
 #include "objloader.hpp"
 #include "openglutils.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #define WIDTH 800
 #define HEIGHT 600
 
@@ -26,7 +23,7 @@ int main(int argc, char *argv[])
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> texturecoords;
 	std::vector<glm::vec3> normals;
-	bool load_result = load_obj_file_basic("build/texturedCube_freebsd.obj",
+	bool load_result = load_obj_file_basic("build/sphere.obj",
 						vertices,
 						texturecoords,
 						normals);
@@ -76,48 +73,22 @@ int main(int argc, char *argv[])
                                         glm::vec3(0,0,0),
                                         glm::vec3(0,1,0));
     glm::mat4 model_matrix = glm::mat4(1.0f);
-
 	glm::mat4 mvp_matrix = projection_matrix * view_matrix * model_matrix;
-
-    glm::vec3 light_position = glm::vec3(0.0f, 8.0f, 0.0f);
-
-    
-	//
+    glm::vec3 light_position = glm::vec3(4.0f, 4.0f, 4.0f);
 
     load_uniform_mat4(shaderProgram, "mvp", &mvp_matrix[0][0]);
-    load_uniform_vec3(shaderProgram, "light_position", &light_position[0]);
-    load_uniform_mat4(shaderProgram, "just_model", &model_matrix[0][0]);
+    load_uniform_vec3(shaderProgram, "light_position", &light_position.x);
 
     // create texture
     stbi_set_flip_vertically_on_load(true);
     int width, height, channels;
-    unsigned char *texture_data = stbi_load("build/texture.jpg", &width, &height, &channels, 0);
-    if(texture_data == NULL){
-        fprintf(stderr, "Failed to load texture");
-        exit(-1);
-    }
-    fprintf(stdout, "Texture loaded... Width: %d, Height: %d", width, height);
+    unsigned char *texture_data = create_texture_rgb("build/texture.jpg", &width, &height, &channels);
 
-    GLuint textureID;
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(texture_data);
-    
     while (!glfwWindowShouldClose(window))
     {
         mvp_matrix = projection_matrix * view_matrix * model_matrix_edit;
-        load_uniform_mat4(shaderProgram, "just_model", &model_matrix_edit[0][0]);
         load_uniform_mat4(shaderProgram, "mvp", &mvp_matrix[0][0]);
+        load_uniform_mat4(shaderProgram, "model", &model_matrix_edit[0][0]);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -152,32 +123,32 @@ int main(int argc, char *argv[])
 
 void handle_window_input(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    static float yRotateAmout = 0.0f;
-    static float zRotateAmout = 0.0f;
-    glm::mat4 transform = glm::mat4(1.0f);
+    float yRotateAmout = 0.0f;
+    float zRotateAmout = 0.0f;
 
+    float rotateAmount = 10.0f;
+    
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
 		glfwTerminate();
 		exit(0);
 	}
     else if(key == GLFW_KEY_W && action == GLFW_PRESS){
-        zRotateAmout += 10.0f;
+        zRotateAmout += rotateAmount;
         glm::mat4 transform = glm::mat4(1.0f);
     }
     else if(key == GLFW_KEY_A && action == GLFW_PRESS){
-        yRotateAmout -= 10.0f;
+        yRotateAmout -= rotateAmount;
     }
     else if(key == GLFW_KEY_D && action == GLFW_PRESS){
-        yRotateAmout += 10.0f;
+        yRotateAmout += rotateAmount;
     }
 
-    transform = glm::rotate(transform,
-                            glm::radians(zRotateAmout),
-                            glm::vec3(0.0f, 0.0f, 1.0f));
+    model_matrix_edit = glm::rotate(model_matrix_edit,
+                                    glm::radians(yRotateAmout),
+                                    glm::vec3(0.0f, 0.0f, 1.0f));
     
-    transform = glm::rotate(transform,
-                            glm::radians(yRotateAmout),
-                            glm::vec3(0.0f, 1.0f, 0.0f));
+    model_matrix_edit = glm::rotate(model_matrix_edit,
+                                    glm::radians(zRotateAmout),
+                                    glm::vec3(0.0f, 1.0f, 0.0f));
 
-    model_matrix_edit = transform;
 }
