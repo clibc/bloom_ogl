@@ -4,7 +4,7 @@
 #pragma warning(disable:4996)
 #endif
 
-#ifdef __UNIX__
+#ifdef __unix__
 #include <string.h>
 #endif
 
