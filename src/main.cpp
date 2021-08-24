@@ -15,6 +15,7 @@
 #define HEIGHT 600
 
 void handle_window_input(GLFWwindow* window, int key, int scancode, int action, int mods);
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 static glm::mat4 model_matrix_edit = glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 1.0f, -2.0f));
 
@@ -23,7 +24,7 @@ int main(int argc, char *argv[])
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> texturecoords;
 	std::vector<glm::vec3> normals;
-	bool load_result = load_obj_file_basic("build/texturedCube.obj",
+	bool load_result = load_obj_file_basic("assets/sphere.obj",
 						vertices,
 						texturecoords,
 						normals);
@@ -43,6 +44,7 @@ int main(int argc, char *argv[])
 
     glfwMakeContextCurrent(window);
 	glfwSetKeyCallback(window, handle_window_input);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	
 	GLenum err = glewInit();
 	if (GLEW_OK != err)	{
@@ -82,7 +84,7 @@ int main(int argc, char *argv[])
     // create texture
     stbi_set_flip_vertically_on_load(true);
     int width, height, channels;
-    unsigned char *texture_data = create_texture_rgb("build/texture.jpg", &width, &height, &channels);
+    unsigned char *texture_data = create_texture_rgb("assets/texture.jpg", &width, &height, &channels);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -151,4 +153,9 @@ void handle_window_input(GLFWwindow* window, int key, int scancode, int action, 
                                     glm::radians(zRotateAmout),
                                     glm::vec3(0.0f, 1.0f, 0.0f));
 
+}
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
 }

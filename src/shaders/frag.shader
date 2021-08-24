@@ -17,5 +17,5 @@ void main()
 
     float diffuse = max(dot(norm, light_direction), 0.05);
 
-	color = texture(texture, textureCoord) * diffuse;
+	color = texture2D(texture, textureCoord) * diffuse;
 }
