@@ -4,6 +4,10 @@
 #pragma warning(disable:4996)
 #endif
 
+#ifdef __UNIX__
+#include <string.h>
+#endif
+
 #include <fstream>
 #include <string>
 #include <vector>
