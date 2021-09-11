@@ -11,6 +11,9 @@
 #include "objloader.hpp"
 #include "openglutils.hpp"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 #define WIDTH 800
 #define HEIGHT 600
 
@@ -60,7 +63,6 @@ int main(int argc, char *argv[])
 	GLuint cube_vb = create_gl_array_buffer(&vertices[0], vertices.size() * sizeof(glm::vec3));
 	GLuint cube_color_vb = create_gl_array_buffer(&normals[0], normals.size() * sizeof(glm::vec3));
     GLuint cube_texture_vb = create_gl_array_buffer(&texturecoords[0], texturecoords.size() * sizeof(glm::vec2));
-    
 	///
 
     GLuint shaderProgram = create_shader("./src/shaders/vertex.shader", "./src/shaders/frag.shader");
@@ -84,17 +86,52 @@ int main(int argc, char *argv[])
     // create texture
     stbi_set_flip_vertically_on_load(true);
     int width, height, channels;
-    unsigned char *texture_data = create_texture_rgb("assets/texture.jpg", &width, &height, &channels);
+    unsigned int texture = create_texture_rgb("assets/freebsdsmash.jpg", &width, &height, &channels);
+    
+    // create frame buffer object, texture to render etc ...
+    GLuint fbo;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
+    GLuint fbo_texture;
+    glGenTextures(1, &fbo_texture);
+    glBindTexture(GL_TEXTURE_2D, fbo_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo_texture, 0);
+
+    GLuint fbo_depth_texture;
+    glGenTextures(1, &fbo_depth_texture);
+    glBindTexture(GL_TEXTURE_2D, fbo_depth_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, WIDTH, HEIGHT, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, fbo_depth_texture, 0);
+    
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE){
+        fprintf(stdout, "Framebuffer is complete\n");
+    }
+    else {fprintf(stdout, "Framebuffer is not complete\n");}    
+    //
+
+    glBindTexture(GL_TEXTURE_2D, texture);
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    void *frame_buffer_data = (void*)malloc(WIDTH * HEIGHT * sizeof(GL_UNSIGNED_BYTE));
+
+    model_matrix_edit = glm::scale(model_matrix_edit, glm::vec3(3,3,3));
+    
+    static bool first_pass = false;
     while (!glfwWindowShouldClose(window))
     {
         mvp_matrix = projection_matrix * view_matrix * model_matrix_edit;
         load_uniform_mat4(shaderProgram, "mvp", &mvp_matrix[0][0]);
         load_uniform_mat4(shaderProgram, "model", &model_matrix_edit[0][0]);
 
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
+
 		// draw cube
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, cube_vb);
@@ -107,15 +144,23 @@ int main(int argc, char *argv[])
 		glEnableVertexAttribArray(2);
 		glBindBuffer(GL_ARRAY_BUFFER, cube_texture_vb);
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-        
+  
 		glDrawArrays(GL_TRIANGLES, 0, (vertices.size() * sizeof(glm::vec3)) / (sizeof(float)) / 3);
 
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
 
-		glfwSwapBuffers(window);
+        if(!first_pass){
+            first_pass = true;
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glBindTexture(GL_TEXTURE_2D, fbo_texture);
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, frame_buffer_data);
+            stbi_write_bmp("out2.bmp", WIDTH, HEIGHT, 1, frame_buffer_data);
+            //glBindTexture(GL_TEXTURE_2D, texture);
+        }
+
+        glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
@@ -152,7 +197,6 @@ void handle_window_input(GLFWwindow* window, int key, int scancode, int action, 
     model_matrix_edit = glm::rotate(model_matrix_edit,
                                     glm::radians(zRotateAmout),
                                     glm::vec3(0.0f, 1.0f, 0.0f));
-
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)

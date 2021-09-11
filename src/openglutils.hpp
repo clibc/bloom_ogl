@@ -55,7 +55,7 @@ bool load_uniform_vec3(GLuint shader_program, const char *name , const float *ve
     return result;
 }
 
-unsigned char* create_texture_rgb(const char *texture_path, int *width, int *height, int *channels)
+unsigned int create_texture_rgb(const char *texture_path, int *width, int *height, int *channels)
 {
     unsigned char* texture_data = NULL;
     stbi_set_flip_vertically_on_load(true);
@@ -64,7 +64,7 @@ unsigned char* create_texture_rgb(const char *texture_path, int *width, int *hei
         fprintf(stderr, "Failed to load texture");
         exit(-1);
     }
-    fprintf(stdout, "Texture loaded... Width: %d, Height: %d", *width, *height);
+    fprintf(stdout, "Texture loaded... Width: %d, Height: %d\n", *width, *height);
 
     GLuint textureID;
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
@@ -81,5 +81,6 @@ unsigned char* create_texture_rgb(const char *texture_path, int *width, int *hei
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(texture_data);
 
-    return texture_data;
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return textureID;
 }
