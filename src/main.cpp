@@ -116,20 +116,20 @@ int main(int argc, char *argv[])
     //
 
     glBindTexture(GL_TEXTURE_2D, texture);
-    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    void *frame_buffer_data = (void*)malloc(WIDTH * HEIGHT * sizeof(GL_UNSIGNED_BYTE));
+    void *frame_buffer_data = (void*)malloc(WIDTH * HEIGHT * 3);
 
     model_matrix_edit = glm::scale(model_matrix_edit, glm::vec3(3,3,3));
     
     static bool first_pass = false;
+    int pass_count = 0;
     while (!glfwWindowShouldClose(window))
     {
         mvp_matrix = projection_matrix * view_matrix * model_matrix_edit;
         load_uniform_mat4(shaderProgram, "mvp", &mvp_matrix[0][0]);
         load_uniform_mat4(shaderProgram, "model", &model_matrix_edit[0][0]);
 
-        glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// draw cube
@@ -147,18 +147,19 @@ int main(int argc, char *argv[])
   
 		glDrawArrays(GL_TRIANGLES, 0, (vertices.size() * sizeof(glm::vec3)) / (sizeof(float)) / 3);
 
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
-		glDisableVertexAttribArray(2);
-
         if(!first_pass){
             first_pass = true;
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glBindTexture(GL_TEXTURE_2D, fbo_texture);
             glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, frame_buffer_data);
-            stbi_write_bmp("out2.bmp", WIDTH, HEIGHT, 1, frame_buffer_data);
-            //glBindTexture(GL_TEXTURE_2D, texture);
+            stbi_flip_vertically_on_write(1);
+            stbi_write_png("out2.png", WIDTH, HEIGHT, 3, (unsigned char*)frame_buffer_data, WIDTH * 3);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
+
+
+        glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(2);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
