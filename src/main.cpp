@@ -115,8 +115,11 @@ int main(int argc, char *argv[])
     else {fprintf(stdout, "Framebuffer is not complete\n");}    
     //
 
-    glBindTexture(GL_TEXTURE_2D, texture);
 
+    // resetttt
+    glBindTexture(GL_TEXTURE_2D, texture);
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
     void *frame_buffer_data = (void*)malloc(WIDTH * HEIGHT * 3);
 
     model_matrix_edit = glm::scale(model_matrix_edit, glm::vec3(3,3,3));
@@ -129,11 +132,12 @@ int main(int argc, char *argv[])
         load_uniform_mat4(shaderProgram, "mvp", &mvp_matrix[0][0]);
         load_uniform_mat4(shaderProgram, "model", &model_matrix_edit[0][0]);
 
-        glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// draw cube
-		glEnableVertexAttribArray(0);
+
+        // draw sphere
+        glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, cube_vb);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
@@ -146,15 +150,17 @@ int main(int argc, char *argv[])
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
   
 		glDrawArrays(GL_TRIANGLES, 0, (vertices.size() * sizeof(glm::vec3)) / (sizeof(float)) / 3);
+        /////
 
-        if(!first_pass){
-            first_pass = true;
-            glBindTexture(GL_TEXTURE_2D, fbo_texture);
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, frame_buffer_data);
-            stbi_flip_vertically_on_write(1);
-            stbi_write_png("out2.png", WIDTH, HEIGHT, 3, (unsigned char*)frame_buffer_data, WIDTH * 3);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        }
+        
+        // if(!first_pass){
+        //     first_pass = true;
+        //     glBindTexture(GL_TEXTURE_2D, fbo_texture);
+        //     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, frame_buffer_data);
+        //     stbi_flip_vertically_on_write(1);
+        //     stbi_write_png("out2.png", WIDTH, HEIGHT, 3, (unsigned char*)frame_buffer_data, WIDTH * 3);
+        //     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // }
 
 
         glDisableVertexAttribArray(0);

@@ -28,7 +28,7 @@ bool load_uniform_mat4(GLuint shader_program, const char *name , const float *mv
     result = matrixID != -1;
 
     if(!result) {
-        fprintf(stderr, "failed to load uniform '%s'\n", name);
+        fprintf(stderr, "%s : failed to load uniform '%s'\n", __func__, name);
         return result;
     }
 

@@ -21,7 +21,7 @@ static bool load_obj_file_basic(const char* filePath,
 {
 	FILE *f = fopen(filePath, "r");
 	if(f == NULL){
-		fprintf(stderr, "Failed to find obj file");
+		fprintf(stderr, "Failed to find obj file '%s'\n", filePath);
 		return false;
 	}
 

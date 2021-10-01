@@ -17,5 +17,19 @@ void main()
 
     float diffuse = max(dot(norm, light_direction), 0.05);
 
-	color = texture2D(texture, textureCoord) * diffuse;
+    vec3 trashold = vec3(0.7126, 0.71152,  0.0722);
+
+    color = texture2D(texture, textureCoord) * diffuse;
+
+    float brightness = dot(color.rgb, trashold);
+
+    //color = vec4(1,0,0,1.0f);
+
+    if(brightness > 1.0)
+    {
+        color = vec4(color.rgb, 1.0f);
+    }
+    else {
+        color = vec4(0, 0, 0, 1.0f);
+    }
 }
