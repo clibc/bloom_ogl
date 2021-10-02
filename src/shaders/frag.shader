@@ -8,7 +8,10 @@ in vec3 light_pos;
 uniform sampler2D texture;
 uniform vec3 light_position;
 
-out vec4 color;
+//out vec4 color;
+
+layout (location = 0) out vec4 color;
+layout (location = 1) out vec4 bright_color;
 
 void main()
 {
@@ -16,20 +19,16 @@ void main()
     vec3 light_direction = normalize(light_position - frag_pos);
 
     float diffuse = max(dot(norm, light_direction), 0.05);
-
-    vec3 trashold = vec3(0.7126, 0.71152,  0.0722);
-
     color = texture2D(texture, textureCoord) * diffuse;
 
+    vec3 trashold = vec3(0.7126, 0.71152,  0.0722);
     float brightness = dot(color.rgb, trashold);
-
-    //color = vec4(1,0,0,1.0f);
 
     if(brightness > 1.0)
     {
-        color = vec4(color.rgb, 1.0f);
+        bright_color = vec4(color.rgb, 1.0f);
     }
     else {
-        color = vec4(0, 0, 0, 1.0f);
+        bright_color = vec4(0, 0, 0, 1.0f);
     }
 }
