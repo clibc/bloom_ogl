@@ -117,7 +117,6 @@ int main(int argc, char *argv[])
     glDrawBuffers(2, attachmets);
     ///
 
-    
     GLuint fbo_depth_texture;
     glGenTextures(1, &fbo_depth_texture);
     glBindTexture(GL_TEXTURE_2D, fbo_depth_texture);
@@ -131,11 +130,37 @@ int main(int argc, char *argv[])
     else {fprintf(stdout, "Framebuffer is not complete\n");}    
     //
 
-
-    // resetttt
-    glBindTexture(GL_TEXTURE_2D, texture);
-    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
+    /// pin-pong buffers && shaders
+    unsigned int pingpongFBO[2];
+    unsigned int pingpongBuffer[2];
+    glGenFramebuffers(2, pingpongFBO);
+    glGenTextures(2, pingpongBuffer);
+    for (unsigned int i = 0; i < 2; i++)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+        glBindTexture(GL_TEXTURE_2D, pingpongBuffer[i]);
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, GL_RGBA16F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL
+            );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(
+            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongBuffer[i], 0
+            );
+    }
+
+    GLuint quad_shader = create_shader("./src/shaders/gaussian_vertex.shader", "./src/shaders/gaussian_fragment.shader");
+
+    GLuint quad_vb  = create_gl_array_buffer(quad_vertices, 18 * sizeof(float));
+    GLuint quad_tex = create_gl_array_buffer(quad_tex_coords, 12 * sizeof(float));
+
+    GLuint gaus_shader = create_shader("./src/shaders/gaussian_vertex.shader", "./src/shaders/gaussian.shader");
+
+    ///
+
     void *frame_buffer_data = (void*)malloc(WIDTH * HEIGHT * 3);
 
     model_matrix_edit = glm::scale(model_matrix_edit, glm::vec3(3,3,3));
@@ -144,12 +169,17 @@ int main(int argc, char *argv[])
     int pass_count = 0;
     while (!glfwWindowShouldClose(window))
     {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+        // first pass
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUseProgram(shaderProgram); // light shader
+        glBindTexture(GL_TEXTURE_2D, texture);
+        
         mvp_matrix = projection_matrix * view_matrix * model_matrix_edit;
         load_uniform_mat4(shaderProgram, "mvp", &mvp_matrix[0][0]);
         load_uniform_mat4(shaderProgram, "model", &model_matrix_edit[0][0]);
-
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // draw sphere
         glEnableVertexAttribArray(0);
@@ -166,21 +196,62 @@ int main(int argc, char *argv[])
   
 		glDrawArrays(GL_TRIANGLES, 0, (vertices.size() * sizeof(glm::vec3)) / (sizeof(float)) / 3);
         /////
-
-        
-        // if(!first_pass){
-        //     first_pass = true;
-        //     glBindTexture(GL_TEXTURE_2D, fbo_texture);
-        //     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, frame_buffer_data);
-        //     stbi_flip_vertically_on_write(1);
-        //     stbi_write_png("out2.png", WIDTH, HEIGHT, 3, (unsigned char*)frame_buffer_data, WIDTH * 3);
-        //     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        // }
-
-
         glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
+
+        // second pass (blur)
+        bool horizontal = true, first_iteration = true;
+        unsigned int amount = 10;
+        glUseProgram(gaus_shader);
+        for (unsigned int i = 0; i < amount; i++)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]); 
+            GLint hloc = glGetUniformLocation(gaus_shader, "horizontal");
+            if(hloc == -1) fprintf(stderr, "'horizontal' uniform is not found.\n");
+            glUniform1i(hloc, horizontal);
+            glBindTexture(
+                GL_TEXTURE_2D, first_iteration ? fbo_textures[1] : pingpongBuffer[!horizontal]
+                );
+
+            //render quad
+            glEnableVertexAttribArray(0);
+            glBindBuffer(GL_ARRAY_BUFFER, quad_vb);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        
+            glEnableVertexAttribArray(1);
+            glBindBuffer(GL_ARRAY_BUFFER, quad_tex);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            //
+
+            horizontal = !horizontal;
+            if (first_iteration)
+                first_iteration = false;
+        }
+        //
+
+        
+        // third pass
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glUseProgram(gaus_shader);
+        glBindTexture(GL_TEXTURE_2D, fbo_textures[0]);
+
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, quad_vb);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+        glEnableVertexAttribArray(1);
+        glBindBuffer(GL_ARRAY_BUFFER, quad_tex);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+        //
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -189,6 +260,14 @@ int main(int argc, char *argv[])
     glfwTerminate();
     return 0;
 }
+// if(!first_pass){
+//     first_pass = true;
+//     glBindTexture(GL_TEXTURE_2D, fbo_texture);
+//     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, frame_buffer_data);
+//     stbi_flip_vertically_on_write(1);
+//     stbi_write_png("out2.png", WIDTH, HEIGHT, 3, (unsigned char*)frame_buffer_data, WIDTH * 3);
+//     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+// }
 
 void handle_window_input(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
