@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 												   0.1f,
 												   100.0f);
 	
-	glm::mat4 view_matrix = glm::lookAt(glm::vec3(1,4,6),
+	glm::mat4 view_matrix = glm::lookAt(glm::vec3(5,4,6),
                                         glm::vec3(0,0,0),
                                         glm::vec3(0,1,0));
     glm::mat4 model_matrix = glm::mat4(1.0f);
@@ -236,9 +236,18 @@ int main(int argc, char *argv[])
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glUseProgram(gaus_shader);
+        glUseProgram(quad_shader);
+        
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, fbo_textures[0]);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, pingpongBuffer[0]);
 
+        GLint screenTexLoc = glGetUniformLocation(quad_shader, "screenTexture");
+        GLint blurTexLoc = glGetUniformLocation(quad_shader, "blurTexture");
+        glUniform1i(screenTexLoc, 0);
+        glUniform1i(blurTexLoc, 1);
+        
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, quad_vb);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
@@ -253,6 +262,9 @@ int main(int argc, char *argv[])
 		glDisableVertexAttribArray(1);
         //
 
+        // reset active texture
+        glActiveTexture(GL_TEXTURE0);
+        
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

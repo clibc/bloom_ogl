@@ -29,6 +29,6 @@ void main()
         bright_color = vec4(color.rgb, 1.0f);
     }
     else {
-        bright_color = vec4(1, 0, 0, 1.0f);
+        bright_color = vec4(0, 0, 0, 1.0f);
     }
 }
